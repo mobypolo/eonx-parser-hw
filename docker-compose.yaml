@@ -1,0 +1,77 @@
+version: '2.1'
+
+volumes:
+  pg-data: {}
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fpm-eonx
+    command: /bin/sh -c "sleep 10s && php /app/bin/console --no-interaction doctrine:migrations:migrate && /usr/local/sbin/php-fpm -F"
+    restart: always
+    user: root
+    depends_on:
+      - db
+    environment:
+      PS1: '\[\033[1;32m\]\[\033[1;36m\][\u@\h] \[\033[1;34m\]\w\[\033[0;35m\] \[\033[1;36m\]# \[\033[0m\]'
+      HOME: /tmp
+      APP_DEBUG: 'true'
+      APP_ENV: test
+      REDIS_HOST: redis
+      REDIS_PASSWORD: password
+      DB_HOST: db
+      DB_DATABASE: test_db
+      DB_USERNAME: root
+      DB_PASSWORD: root
+      TZ: "Europe/Moscow"
+    volumes:
+      - ./configs/php.ini:/usr/local/etc/php/conf.d/local.ini
+      - ./bin:/app/bin
+      - ./dummy_data:/app/dummy_data
+      - ./config:/app/config
+      - ./migrations:/app/migrations
+      - ./public:/app/public
+      - ./src:/app/src
+      - ./templates:/app/templates
+      - ./tests:/app/tests
+      - ./translations:/app/translations
+      - ./.env:/app/.env
+      - ./.env.test:/app/.env.test
+      - ./phpunit.xml.dist:/app/phpunit.xml.dist
+      - ./symfony.lock:/app/symfony.lock
+
+  #Nginx Service
+  webserver:
+    image: nginx:stable-alpine
+    container_name: nginx-eonx
+    restart: unless-stopped
+    tty: true
+    working_dir: /app
+    ports:
+      - 80:80/tcp
+      - 443:443/tcp
+    volumes:
+      - ./configs/nginx.conf:/etc/nginx/conf.d/nginx.conf
+      - ./public:/app/public
+
+  db:
+    image: postgres:9.6.21-alpine
+    container_name: db-eonx
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: test_db
+      PGDATA: /var/lib/postgresql/data
+    volumes:
+      - pg-data:/var/lib/postgresql/data:rw
+    tty: true
+   
+  adminer:
+    image: adminer:4.8.1
+    container_name: adminer-eonx
+    restart: always
+    ports:
+      - 9111:8080

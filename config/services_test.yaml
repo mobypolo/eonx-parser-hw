@@ -25,6 +25,8 @@ services:
     App\Interfaces\IParseDataProviderRepository: '@App\Repository\ParseDataProviderRepository'
     App\Interfaces\IParsedUserRepository: '@App\Repository\ParsedUserRepository'
     App\Interfaces\IParseUserService: '@App\Service\ParseUsers'
+    App\Service\Mock\ParseUsers: 
+        public: true
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
